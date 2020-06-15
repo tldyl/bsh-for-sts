@@ -13,8 +13,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.localization.UIStrings;
 import demoMod.bshForSts.BshForSts;
+import demoMod.bshForSts.actions.ExecuteCommandAction;
 import demoMod.bshForSts.io.MyOutputStream;
-import demoMod.bshForSts.io.MyPrintStream;
 
 import java.awt.*;
 import java.io.*;
@@ -41,8 +41,8 @@ public class CommandWindow extends JFrame {
 
     public CommandWindow() {
         initComponents();
-        err = new MyPrintStream(new MyOutputStream(this.txtAreaResult));
-        out = new MyPrintStream(new MyOutputStream(this.txtAreaResult));
+        err = new PrintStream(new MyOutputStream(this.txtAreaResult));
+        out = new PrintStream(new MyOutputStream(this.txtAreaResult));
         interpreter.setOut(out);
         interpreter.setErr(err);
         try {
@@ -147,8 +147,7 @@ public class CommandWindow extends JFrame {
         if (r == JFileChooser.APPROVE_OPTION) {
             String path = fileChooser.getSelectedFile().getPath();
             try {
-                File f = new File(path);
-                f.createNewFile();
+                File f = createFile(path);
                 txtScript.setText(path);
                 fileChooser.setSelectedFile(f);
                 currentFile = f;
@@ -376,7 +375,7 @@ public class CommandWindow extends JFrame {
         });
         txtAreaResult.setLineWrap(false);
         txtSingleLine.setText("");
-        btnExecute.addActionListener(e -> execute());
+        btnExecute.addActionListener(e -> BshForSts.actionList.add(new ExecuteCommandAction(this::execute)));
     }
 
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
@@ -403,7 +402,7 @@ public class CommandWindow extends JFrame {
     private JSeparator separator2;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
-    private void execute() {
+    private void execute(Void aVoid) {
         txtAreaResult.setText("");
         if ("".equals(txtSingleLine.getText())) {
             out.println("Executing script...");
