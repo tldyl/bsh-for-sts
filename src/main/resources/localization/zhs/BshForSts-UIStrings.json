@@ -1,0 +1,57 @@
+{
+  "BshForSts:lblScript": {
+    "TEXT": [
+      "脚本路径："
+    ]
+  },
+  "BshForSts:lblPreview": {
+    "TEXT": [
+      "代码预览："
+    ]
+  },
+  "BshForSts:lblResult": {
+    "TEXT": [
+      "运行结果："
+    ]
+  },
+  "BshForSts:lblSingleLine": {
+    "TEXT": [
+      "单行指令："
+    ]
+  },
+  "BshForSts:lblLn": {
+    "TEXT": [
+      "行"
+    ]
+  },
+  "BshForSts:lblCo": {
+    "TEXT": [
+      "列"
+    ]
+  },
+  "BshForSts:btnLoad": {
+    "TEXT": [
+      "打开"
+    ]
+  },
+  "BshForSts:btnSave": {
+    "TEXT": [
+      "保存"
+    ]
+  },
+  "BshForSts:btnNew": {
+    "TEXT": [
+      "新建"
+    ]
+  },
+  "BshForSts:btnClear": {
+    "TEXT": [
+      "清空"
+    ]
+  },
+  "BshForSts:btnExecute": {
+    "TEXT": [
+      "执行"
+    ]
+  }
+}
