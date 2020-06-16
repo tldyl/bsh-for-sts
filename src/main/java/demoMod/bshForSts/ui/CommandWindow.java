@@ -10,8 +10,12 @@ import bsh.EvalError;
 import bsh.Interpreter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
+import com.megacrit.cardcrawl.helpers.CardLibrary;
+import com.megacrit.cardcrawl.helpers.RelicLibrary;
 import com.megacrit.cardcrawl.localization.UIStrings;
+import com.megacrit.cardcrawl.relics.AbstractRelic;
 import demoMod.bshForSts.BshForSts;
 import demoMod.bshForSts.actions.ExecuteCommandAction;
 import demoMod.bshForSts.io.MyOutputStream;
@@ -20,9 +24,8 @@ import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.FontUIResource;
@@ -38,11 +41,17 @@ public class CommandWindow extends JFrame {
     private File currentFile;
     private PrintStream err;
     private PrintStream out;
+    private List<AbstractCard> cards = new ArrayList<>();
+    private List<AbstractRelic> relics = new ArrayList<>();
 
     public CommandWindow() {
         initComponents();
-        err = new PrintStream(new MyOutputStream(this.txtAreaResult));
-        out = new PrintStream(new MyOutputStream(this.txtAreaResult));
+        try {
+            err = new PrintStream(new MyOutputStream(this.txtAreaResult), true, "UTF-8");
+            out = new PrintStream(new MyOutputStream(this.txtAreaResult), true, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         interpreter.setOut(out);
         interpreter.setErr(err);
         try {
@@ -106,11 +115,13 @@ public class CommandWindow extends JFrame {
             txtAreaPreview.setText("");
             try {
                 FileInputStream in = new FileInputStream(currentFile);
-                byte[] buf = new byte[512];
+                InputStreamReader reader = new InputStreamReader(in);
+                char[] buf = new char[512];
                 int len;
-                while ((len = in.read(buf)) != -1) {
-                    txtAreaPreview.append(new String(buf, 0, len, StandardCharsets.UTF_8));
+                while ((len = reader.read(buf)) != -1) {
+                    txtAreaPreview.append(new String(buf, 0, len));
                 }
+                reader.close();
                 in.close();
                 BshForSts.lastLoadedFilePath = currentFile.getAbsolutePath();
                 BshForSts.saveSettings();
@@ -202,6 +213,24 @@ public class CommandWindow extends JFrame {
         txtAreaPreviewKeyTyped(null);
     }
 
+    private void thisComponentResized(ComponentEvent e) {
+        scrPreview.setSize(this.getWidth() - 50, scrPreview.getHeight());
+        scrResult.setSize(this.getWidth() - 50, this.getHeight() - 460);
+        txtScript.setSize(this.getWidth() - 285, txtScript.getHeight());
+        txtSingleLine.setBounds(txtSingleLine.getX(), this.getHeight() - 80, this.getWidth() - 349, txtSingleLine.getHeight());
+        btnLoad.setBounds(this.getWidth() - 260, btnLoad.getY(), btnLoad.getWidth(), btnLoad.getHeight());
+        btnSave.setBounds(btnLoad.getX() + 80, btnSave.getY(), btnSave.getWidth(), btnSave.getHeight());
+        btnNew.setBounds(btnSave.getX() + 80, btnNew.getY(), btnNew.getWidth(), btnNew.getHeight());
+        btnExecute.setBounds(this.getWidth() - 155, this.getHeight() - 80, btnExecute.getWidth(), btnExecute.getHeight());
+        lblLn.setBounds(this.getWidth() - 110, lblLn.getY(), lblLn.getWidth(), lblLn.getHeight());
+        lblLnNum.setBounds(lblLn.getX() + 20, lblLnNum.getY(), lblLnNum.getWidth(), lblLnNum.getHeight());
+        lblCo.setBounds(lblLnNum.getX() + 20, lblCo.getY(), lblCo.getWidth(), lblCo.getHeight());
+        lblCoNum.setBounds(lblCo.getX() + 20, lblCoNum.getY(), lblCoNum.getWidth(), lblCoNum.getHeight());
+        lblSingleLine.setBounds(lblSingleLine.getX(), this.getHeight() - 80, lblSingleLine.getWidth(), lblSingleLine.getHeight());
+        separator1.setSize(this.getWidth() - 49, separator1.getHeight());
+        separator2.setSize(this.getWidth() - 49, separator2.getHeight());
+    }
+
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
         txtScript = new JTextField();
@@ -229,7 +258,12 @@ public class CommandWindow extends JFrame {
         //======== this ========
         setTitle("BeanShell for STS");
         setFont(new Font("Arial", Font.PLAIN, 10));
-        setResizable(false);
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                thisComponentResized(e);
+            }
+        });
         Container contentPane = getContentPane();
         contentPane.setLayout(null);
 
@@ -443,6 +477,45 @@ public class CommandWindow extends JFrame {
 
     public void println(long l) {
         out.println(l);
+    }
+
+    public String getCardIdByName(String name) {
+        if (cards.size() == 0) {
+            cards.addAll(CardLibrary.getAllCards());
+        }
+        for (AbstractCard card : cards) {
+            if (card.name.equals(name)) {
+                return card.cardID;
+            }
+        }
+        return "";
+    }
+
+    public String getRelicIdByName(String name) {
+        if (relics.size() == 0) {
+            Field[] fields = RelicLibrary.class.getDeclaredFields();
+            for (Field field : fields) {
+                if (field.getType().getSimpleName().contains("ArrayList")) {
+                    field.setAccessible(true);
+                    try {
+                        ArrayList<AbstractRelic> relics1 = (ArrayList) field.get(null);
+                        for (AbstractRelic relic : relics1) {
+                            if (!relics.contains(relic)) {
+                                relics.add(relic);
+                            }
+                        }
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        for (AbstractRelic relic : relics) {
+            if (relic.name.equals(name)) {
+                return relic.relicId;
+            }
+        }
+        return "";
     }
 
     static {

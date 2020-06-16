@@ -18,6 +18,7 @@ public class MyOutputStream extends OutputStream {
     @Override
     public void write(int b) {
         buf[len++] = (byte) b;
+        if (len >= buf.length) flush();
     }
 
     @Override
@@ -27,7 +28,7 @@ public class MyOutputStream extends OutputStream {
 
     @Override
     public void write(byte[] b, int off, int len) {
-        String s = new String(b, StandardCharsets.UTF_8).substring(off, len);
+        String s = new String(b, off, len, StandardCharsets.UTF_8);
         Document doc = component.getDocument();
         if (doc != null) {
             try {
